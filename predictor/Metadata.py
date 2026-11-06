@@ -45,6 +45,11 @@ def load_audio_flexible(filename, sr=22050):
     Supports .wav, .mp3, .ogg, .flac, .m4a, .aac, .au, .aiff, .opus.
     Falls back to PyAV and temporary files if an in-memory stream cannot be decoded directly.
     """
+    if isinstance(filename, str) and not os.path.exists(filename):
+        stripped = filename.lstrip("/\\")
+        if os.path.exists(stripped):
+            filename = stripped
+
     if hasattr(filename, "seek"):
         filename.seek(0)
 
