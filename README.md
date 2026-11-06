@@ -308,7 +308,7 @@ docker compose down
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/your-username/Music_Genre_Classification.git
+git clone https://github.com/Milind1234/Music_Genre_Classification.git
 cd Music_Genre_Classification
 ```
 
