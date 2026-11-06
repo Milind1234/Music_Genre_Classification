@@ -1,0 +1,33 @@
+# Python virtual environment
+.venv/
+venv/
+env/
+
+# Bytecode & Caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Raw multi-gigabyte audio datasets (CSV feature files are preserved in datasets/*.csv)
+datasets/gacmis/
+datasets/kaggle_indian/
+
+# Uploaded user media
+media/*
+!media/.gitkeep
+
+# SQLite database
+db.sqlite3
+*.sqlite3
+
+# OS / Editor specific
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.log
+
+# Test & coverage
+.coverage
+htmlcov/

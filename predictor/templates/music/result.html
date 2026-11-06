@@ -1,87 +1,575 @@
-{{file.name}}
-{%load static%}
+{% load static %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Analysis Result - Music Genre Classification</title>
 
-	<title>Music Genre Classification</title>
-
-<!-- Styles -->
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:400,600,700" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,400i,700,700i" rel="stylesheet">
+    <!-- Styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link href="{% static 'music/css/bootstrap.css' %}" rel="stylesheet">
     <link href="{% static 'music/css/fontawesome-all.css' %}" rel="stylesheet">
-    <link href="{% static 'music/css/swiper.css' %}" rel="stylesheet">
-  	<link href="{% static 'music/css/magnific-popup.css' %}" rel="stylesheet">
-  	<link href="{% static 'music/css/styles.css' %}" rel="stylesheet">
-  	<link href="{% static 'music/css/mystyle.css' %}" rel="stylesheet">
-
-    <!-- Favicon  -->
+    <link href="{% static 'music/css/styles.css' %}" rel="stylesheet">
+    <link href="{% static 'music/css/mystyle.css' %}" rel="stylesheet">
     <link rel="icon" href="{% static 'music/images/headphone.png' %}">
 
+    <style>
+        body {
+            background: #111422;
+            color: #f1f5f9;
+            font-family: 'Open Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        .result-container {
+            max-width: 1140px;
+            margin: 0 auto;
+            padding: 3rem 1rem 5rem 1rem;
+        }
+
+        .result-card {
+            background: #1a1e30;
+            border: 1px solid #2a314b;
+            border-radius: 14px;
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .hero-banner {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            border-radius: 14px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            color: #fff;
+            margin-bottom: 2rem;
+            box-shadow: 0 12px 35px rgba(79, 70, 229, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-banner.indian-theme {
+            background: linear-gradient(135deg, #d97706 0%, #dc2626 50%, #7c3aed 100%);
+            box-shadow: 0 12px 35px rgba(217, 119, 6, 0.4);
+        }
+
+        .hero-banner::after {
+            content: "";
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .genre-badge {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3.2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin: 0.5rem 0;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .confidence-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.22);
+            padding: 0.4rem 1.25rem;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+        }
+
+        .genre-desc-box {
+            background: rgba(0, 0, 0, 0.25);
+            border-radius: 10px;
+            padding: 0.75rem 1.25rem;
+            margin: 1.25rem auto 0 auto;
+            max-width: 650px;
+            font-size: 0.95rem;
+            color: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .meta-pill {
+            background: #23293f;
+            border: 1px solid #333c5e;
+            border-radius: 8px;
+            padding: 0.65rem 1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .meta-pill-label {
+            color: #94a3b8;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .meta-pill-value {
+            color: #f8fafc;
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        /* Top 3 Progress Bars */
+        .prob-item {
+            margin-bottom: 1.25rem;
+        }
+
+        .prob-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.35rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .prob-rank {
+            display: inline-block;
+            width: 22px;
+            height: 22px;
+            line-height: 22px;
+            text-align: center;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .rank-1 { background: #f59e0b; color: #1e293b; }
+        .rank-2 { background: #94a3b8; color: #1e293b; }
+        .rank-3 { background: #b45309; color: #fff; }
+
+        .progress-custom {
+            height: 14px;
+            background: #23293f;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-custom {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 1.2s ease-in-out;
+        }
+
+        .bar-rank-1 { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+        .bar-rank-2 { background: linear-gradient(90deg, #3b82f6, #06b6d4); }
+        .bar-rank-3 { background: linear-gradient(90deg, #10b981, #14b8a6); }
+
+        .viz-img-container {
+            background: #181c2e;
+            border-radius: 10px;
+            padding: 0.5rem;
+            border: 1px solid #2a314b;
+            text-align: center;
+        }
+
+        .viz-img-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 6px;
+        }
+
+        .btn-back {
+            background: #2563eb;
+            color: #fff;
+            padding: 0.65rem 1.75rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            background: #1d4ed8;
+            color: #fff;
+            text-decoration: none;
+            transform: translateY(-2px);
+        }
+
+        .accordion-btn {
+            background: #23293f;
+            color: #94a3b8;
+            border: 1px solid #333c5e;
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            width: 100%;
+            text-align: left;
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .accordion-btn:hover {
+            color: #f8fafc;
+            background: #283049;
+        }
+
+        /* Audio Player Styling */
+        .audio-player-box {
+            background: #141829;
+            border: 1px solid #2d3553;
+            border-radius: 10px;
+            padding: 0.9rem;
+        }
+
+        .custom-audio {
+            border-radius: 20px;
+            outline: none;
+        }
+
+        .custom-audio::-webkit-media-controls-panel {
+            background-color: #1e2238;
+        }
+
+        .btn-action-export {
+            background: #1e243b;
+            color: #cbd5e1;
+            border: 1px solid #333c5e;
+            padding: 0.65rem 1.3rem;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-action-export:hover {
+            background: #313b5c;
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        @media print {
+            body {
+                background: #fff !important;
+                color: #000 !important;
+            }
+            .btn-back, .btn-action-export, .audio-player-box, .accordion-btn {
+                display: none !important;
+            }
+            .result-card, .hero-banner {
+                background: #fff !important;
+                border: 1px solid #ddd !important;
+                color: #000 !important;
+                box-shadow: none !important;
+            }
+            .meta-pill {
+                background: #f1f5f9 !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+            .genre-badge {
+                color: #1e293b !important;
+                -webkit-text-fill-color: initial !important;
+            }
+        }
+    </style>
 </head>
 
-<body data-spy="scroll" data-target=".fixed-top">
-<!-- Preloader -->
-<div class="spinner-wrapper">
-    <div class="spinner">
-        <div class="bounce1"></div>
-        <div class="bounce2"></div>
-        <div class="bounce3"></div>
-    </div>
-</div>
-<!-- end of preloader -->
+<body>
 
+    <div class="result-container">
 
-<div id="features" class="tabs">
-    <div class="container">
-        <div class="card right-pane" style="margin-top: -5rem;">
-            <div class="card-body">
-                <div class="card-icon">
-                    <a title="Close (Esc)" href="{% url 'predictor:index' %}" style="color: white">
-                      <i class="fas fa-backward"></i>
-                    </a>
-                </div>
+        <!-- Top Navigation -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{% url 'predictor:index' %}" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Analyze Another Track
+            </a>
+            <div style="color: #94a3b8; font-size: 0.95rem;">
+                <span class="badge badge-primary mr-2" style="font-size: 0.85rem; padding: 0.4rem 0.75rem;">
+                    {% if model_type == 'indian' %}🇮🇳 Indian Classifier{% else %}🌍 Global Classifier{% endif %}
+                </span>
+                <i class="fas fa-file-audio"></i> <strong>{{ filename }}</strong>
             </div>
         </div>
+
+        <!-- Hero Prediction Banner -->
+        <div class="hero-banner {% if model_type == 'indian' %}indian-theme{% endif %}">
+            <p style="text-transform: uppercase; letter-spacing: 2px; font-size: 0.95rem; margin-bottom: 0.25rem; opacity: 0.9;">
+                <i class="fas fa-music"></i> Predicted Music Genre
+            </p>
+            <div class="genre-badge">{{ genre }}</div>
+            <div class="confidence-tag">
+                <i class="fas fa-chart-line"></i> {{ top_confidence }}% Confidence
+            </div>
+
+            <!-- Genre Description Helper -->
+            <div class="genre-desc-box">
+                {% if genre_raw == 'bollywood' %}
+                    <i class="fas fa-film text-warning mr-1"></i> <strong>Bollywood / Filmi:</strong> Upbeat commercial film track with modern production, polished melodic hooks, and energetic rhythm.
+                {% elif genre_raw == 'carnatic' %}
+                    <i class="fas fa-compact-disc text-warning mr-1"></i> <strong>Carnatic Classical:</strong> South Indian classical composition grounded in complex Raga melodies, intricate Tala cycles, and acoustic instrumentation.
+                {% elif genre_raw == 'hindustani' %}
+                    <i class="fas fa-guitar text-warning mr-1"></i> <strong>Hindustani Classical:</strong> North Indian classical piece featuring expansive improvisation, Sitar/Sarod/Bansuri harmonics, and subtle Tabla cadence.
+                {% elif genre_raw == 'punjabi' %}
+                    <i class="fas fa-drum text-warning mr-1"></i> <strong>Punjabi / Bhangra:</strong> High-energy track driven by punchy Dhol beats, vibrant tempo, and infectious celebratory rhythm.
+                {% elif genre_raw == 'ghazal' %}
+                    <i class="fas fa-feather-alt text-warning mr-1"></i> <strong>Ghazal:</strong> Poetic and lyrical acoustic composition characterized by warm Harmonium, nuanced Tabla, and soulful melodic expression.
+                {% elif genre_raw == 'sufi' %}
+                    <i class="fas fa-hands text-warning mr-1"></i> <strong>Sufi / Qawwali:</strong> Spiritual piece featuring accelerating tempo, clapped rhythm, harmonium, and emotive vocal crescendos.
+                {% elif genre_raw == 'folk' %}
+                    <i class="fas fa-users text-warning mr-1"></i> <strong>Regional Indian Folk / Folk-Pop:</strong> Celebratory regional folk music (e.g., Marathi Haldi / Dholki / Lavani, Garba, Rajasthani, Bihu) powered by authentic acoustic folk percussion, shehnai/dholak cadence, and upbeat dance meter.
+                {% elif genre_raw == 'bhajan' %}
+                    <i class="fas fa-om text-warning mr-1"></i> <strong>Devotional / Bhajan:</strong> Sacred hymn marked by serene Harmonium, gentle rhythm, cymbals (manjira), and uplifting spiritual warmth.
+                {% elif genre_raw == 'desi_hiphop' %}
+                    <i class="fas fa-microphone-alt text-warning mr-1"></i> <strong>Desi Hip-Hop / Rap:</strong> Dynamic rhythm driven by urban beats, punchy 808s, rhythmic rap flow, and modern Indian hip-hop fusion.
+                {% elif genre_raw == 'semiclassical' %}
+                    <i class="fas fa-drum text-warning mr-1"></i> <strong>Semiclassical / Traditional:</strong> Expressive semi-classical art music blending classical ragas with accessible folk melodies, thumri, and light acoustic cadence.
+                {% else %}
+                    <i class="fas fa-info-circle text-info mr-1"></i> Classified using the <strong>{{ model_display_name }}</strong>.
+                {% endif %}
+            </div>
+        </div>
+
         <div class="row">
-            <div class="col-lg-12">
-                <h2>Your Music's Genre is</h2>
-                <div class="col-md-12">
-                    <div class="row mt-5">
-                        <div class="col-md-4">
-                            <img class="img-fluid" src="{% static 'music/images/celebration-1.png' %}" alt="alternative">
+            <!-- Left Column: Audio Metadata -->
+            <div class="col-lg-4 col-md-12">
+                <div class="result-card">
+                    <h5 style="color: #e2e8f0; font-weight: 700; margin-bottom: 1.25rem;">
+                        <i class="fas fa-info-circle text-primary"></i> Track Profile
+                    </h5>
+
+                    <div class="meta-pill">
+                        <span class="meta-pill-label"><i class="fas fa-sliders-h"></i> Model</span>
+                        <span class="meta-pill-value" style="font-size: 0.9rem;">{{ model_display_name }}</span>
+                    </div>
+
+                    <div class="meta-pill">
+                        <span class="meta-pill-label"><i class="fas fa-microchip"></i> Engine</span>
+                        <span class="meta-pill-value" style="font-size: 0.85rem;">
+                            {% if architecture == 'cnn' %}
+                                <span class="badge badge-info"><i class="fas fa-brain mr-1"></i> 2D CNN (Vision)</span>
+                            {% else %}
+                                <span class="badge badge-primary"><i class="fas fa-bolt mr-1"></i> Classical SVM</span>
+                            {% endif %}
+                        </span>
+                    </div>
+
+                    <div class="meta-pill">
+                        <span class="meta-pill-label"><i class="fas fa-clock"></i> Duration</span>
+                        <span class="meta-pill-value">{{ duration }} s</span>
+                    </div>
+
+                    <div class="meta-pill">
+                        <span class="meta-pill-label"><i class="fas fa-tachometer-alt"></i> Tempo</span>
+                        <span class="meta-pill-value">{{ tempo }} BPM</span>
+                    </div>
+
+                    <div class="meta-pill">
+                        <span class="meta-pill-label"><i class="fas fa-drum"></i> Total Beats</span>
+                        <span class="meta-pill-value">{{ beats }}</span>
+                    </div>
+
+                    <div class="meta-pill">
+                        <span class="meta-pill-label"><i class="fas fa-wave-square"></i> Sample Rate</span>
+                        <span class="meta-pill-value">{{ sample_rate }} Hz</span>
+                    </div>
+
+                    <!-- In-Browser Audio Player -->
+                    {% if audio_uri %}
+                    <div class="audio-player-box mt-3">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                            <span style="color: #cbd5e1; font-weight: 600; font-size: 0.85rem;">
+                                <i class="fas fa-play-circle text-primary mr-1"></i> Audio Playback
+                            </span>
+                            <span class="badge badge-secondary" style="font-size: 0.7rem;">HTML5</span>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card right-pane" style="margin-top: -5rem;">
-                                <div class="card-body">
-                                    <div class="card-icon" style="height: 38vh; width: 38vh; margin-top: 6rem; margin-left: 3rem; background-color: blueviolet">
-                                        <h3 style="margin-top: 7rem;">
-                                        <i>
-                                        	{{ genre }}
-                                        </i>
-                                        </h3>
-                                    </div>
-                                </div>
+                        <audio controls class="w-100 custom-audio" preload="metadata">
+                            <source src="{{ audio_uri }}" type="{{ audio_mime }}">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Right Column: Probability Distribution -->
+            <div class="col-lg-8 col-md-12">
+                <div class="result-card">
+                    <h5 style="color: #e2e8f0; font-weight: 700; margin-bottom: 1.25rem;">
+                        <i class="fas fa-chart-bar text-warning"></i> Top-3 Genre Matches
+                    </h5>
+
+                    {% for item in top3 %}
+                    <div class="prob-item">
+                        <div class="prob-header">
+                            <div>
+                                <span class="prob-rank rank-{{ item.rank }}">#{{ item.rank }}</span>
+                                <span style="color: #f1f5f9; font-weight: 600;">{{ item.genre }}</span>
                             </div>
+                            <div style="color: #94a3b8; font-weight: 700;">{{ item.confidence }}%</div>
                         </div>
-                        <div class="col-md-4">
-                            <img class="img-fluid" src="{% static 'music/images/celebration-2.png' %}" style="height: 300px;" alt="alternative">
+                        <div class="progress-custom">
+                            <div class="progress-bar-custom bar-rank-{{ item.rank }}" style="width: {{ item.confidence }}%;"></div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                    <!-- Expandable Complete Genre Table -->
+                    <div class="mt-4">
+                        <button class="accordion-btn" type="button" data-toggle="collapse" data-target="#allGenresTable" aria-expanded="false">
+                            <span><i class="fas fa-list-ol"></i> View Complete Genre Distribution ({{ all_probabilities|length }} Classes)</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="collapse mt-3" id="allGenresTable">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-dark" style="background: transparent; font-size: 0.9rem;">
+                                    <thead>
+                                        <tr style="color: #94a3b8; border-bottom: 1px solid #333c5e;">
+                                            <th>Rank</th>
+                                            <th>Genre</th>
+                                            <th class="text-right">Probability</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in all_probabilities %}
+                                        <tr style="border-bottom: 1px solid #23293f;">
+                                            <td style="color: #94a3b8;">#{{ item.rank }}</td>
+                                            <td style="font-weight: 600; color: {% if item.rank == 1 %}#818cf8{% else %}#e2e8f0{% endif %};">
+                                                {{ item.genre }}
+                                                {% if item.rank == 1 %}
+                                                <span class="badge badge-primary ml-1">Top Match</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-right" style="font-weight: 700; color: #94a3b8;">{{ item.confidence }}%</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div> <!-- end of col -->
-        </div> <!-- end of row -->
+            </div>
+        </div>
 
+        <!-- Audio Visualizations Section -->
+        <div class="row">
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="result-card h-100">
+                    <h5 style="color: #e2e8f0; font-weight: 700; margin-bottom: 1rem;">
+                        <i class="fas fa-water text-info"></i> Audio Waveform
+                    </h5>
+                    <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1rem;">
+                        Signal amplitude across playback duration, illustrating dynamic range and acoustic energy.
+                    </p>
+                    <div class="viz-img-container">
+                        {% if waveform_b64 %}
+                        <img src="data:image/png;base64,{{ waveform_b64 }}" alt="Audio Waveform">
+                        {% else %}
+                        <p class="text-muted p-4">Waveform unavailable</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
 
+            <div class="col-lg-6 col-md-12 mb-4">
+                <div class="result-card h-100">
+                    <h5 style="color: #e2e8f0; font-weight: 700; margin-bottom: 1rem;">
+                        <i class="fas fa-fire-alt text-danger"></i> Mel-Spectrogram
+                    </h5>
+                    <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 1rem;">
+                        Decibel energy distribution across frequency bands over time (perceptual mel scale).
+                    </p>
+                    <div class="viz-img-container">
+                        {% if spectrogram_b64 %}
+                        <img src="data:image/png;base64,{{ spectrogram_b64 }}" alt="Mel-Spectrogram">
+                        {% else %}
+                        <p class="text-muted p-4">Spectrogram unavailable</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
 
-</div>
-</div>
+        <!-- Bottom Action CTA & Analysis Export -->
+        <div class="text-center mt-4 mb-5">
+            <a href="{% url 'predictor:index' %}" class="btn-back mr-2 mb-2">
+                <i class="fas fa-upload"></i> Classify Another Track
+            </a>
+            <button type="button" onclick="downloadJSONReport()" class="btn-action-export mr-2 mb-2">
+                <i class="fas fa-file-download text-info"></i> Export JSON Report
+            </button>
+            <button type="button" onclick="window.print()" class="btn-action-export mb-2">
+                <i class="fas fa-print text-warning"></i> Print / Save PDF
+            </button>
+        </div>
 
+    </div>
 
-{%include 'music/snippets/js.html'%}
+    <!-- Export Script -->
+    <script>
+        function downloadJSONReport() {
+            var report = {
+                project: "Music Genre Classification System",
+                timestamp: new Date().toISOString(),
+                track_profile: {
+                    filename: "{{ filename|escapejs }}",
+                    duration_seconds: {{ duration }},
+                    tempo_bpm: {{ tempo }},
+                    total_beats: {{ beats }},
+                    sample_rate_hz: {{ sample_rate }}
+                },
+                model_info: {
+                    model_type: "{{ model_type|escapejs }}",
+                    model_name: "{{ model_display_name|escapejs }}"
+                },
+                prediction: {
+                    predicted_genre: "{{ genre|escapejs }}",
+                    top_confidence_percentage: {{ top_confidence }},
+                    top_3_matches: [
+                        {% for item in top3 %}
+                        {
+                            rank: {{ item.rank }},
+                            genre: "{{ item.genre|escapejs }}",
+                            confidence_percentage: {{ item.confidence }}
+                        }{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    full_genre_distribution: [
+                        {% for item in all_probabilities %}
+                        {
+                            rank: {{ item.rank }},
+                            genre: "{{ item.genre|escapejs }}",
+                            confidence_percentage: {{ item.confidence }}
+                        }{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ]
+                }
+            };
+
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(report, null, 2));
+            var downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "music_genre_report_{{ genre_raw }}.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+    </script>
+
+    <!-- Scripts -->
+    <script src="{% static 'music/js/jquery.min.js' %}"></script>
+    <script src="{% static 'music/js/bootstrap.min.js' %}"></script>
 </body>
 </html>
-
-
-
-

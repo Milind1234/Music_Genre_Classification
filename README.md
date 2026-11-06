@@ -1,433 +1,429 @@
-# Music Genre Classification Web App
+# 🎵 Music Genre Classification Web App (Classical ML & Deep Learning)
 
-A production-style **Music Genre Classification** project that combines **audio feature engineering**, **machine learning model selection**, and a **Django web application** for real-time genre prediction from uploaded `.wav` files.
-
-This project was built to demonstrate an end-to-end ML workflow:
-
-- extracting meaningful music/audio features with **librosa**
-- training and comparing multiple classical ML models
-- improving performance with **hyperparameter tuning** and **feature selection**
-- exporting the best model for inference
-- integrating the model into a **Django-based upload + prediction app**
+An end-to-end Machine Learning and Deep Learning Django web application that classifies audio tracks into **8 Indian Music Genres** and **10 Global/Western Music Genres** from uploaded `.wav`, `.mp3`, `.ogg`, `.flac`, `.m4a`, and `.opus` audio files. Features dual architectures: a **Tuned Support Vector Machine (SVM) (81.17% Test Accuracy)** and a **PyTorch 2D Mel-Spectrogram Convolutional Neural Network (CNN)**.
 
 ---
 
-## Project Highlights
+## 📌 Table of Contents
 
-- **End-to-end ML pipeline**: dataset → preprocessing → training → tuning → evaluation → deployment
-- **Audio feature extraction** using tempo, beats, spectral features, and **MFCCs**
-- **Multiple model comparison**:
-  - Support Vector Machine (SVM)
-  - Extra Trees Classifier
-  - Random Forest Classifier
-  - K-Nearest Neighbors (KNN)
-- **Feature selection with SelectKBest** to improve classification performance
-- **Django web app** for uploading `.wav` files and getting genre predictions
-- **Reusable saved model package** that includes model + scaler + feature selector where required
-
----
-
-## Tech Stack
-
-**Languages & Frameworks**
-
-- Python
-- Django
-
-**ML / Data Libraries**
-
-- scikit-learn
-- pandas
-- numpy
-- librosa
-
-**Other Tools**
-
-- Jupyter Notebook
-- pickle (model serialization)
+- [Overview](#overview)
+- [Supported Genres](#supported-genres)
+  - [🇮🇳 Indian Music Classifier (8 Genres)](#-1-indian-music-classifier-8-genres)
+  - [🌍 Global / Western Classifier (10 Genres)](#-2-global--western-classifier-gtzan-10-genres)
+- [System Architecture & Dual Pipelines](#system-architecture)
+- [Dataset & Audio Features](#dataset--audio-features)
+  - [The 28 Extracted Features](#the-28-extracted-features)
+  - [Feature Selection (SelectKBest)](#feature-selection-selectkbest)
+- [Machine Learning Workflow & Benchmarks](#machine-learning-workflow--benchmarks)
+  - [12-Model Machine Learning Tournament Leaderboard](#-12-model-machine-learning-tournament-leaderboard)
+  - [Hyperparameter Tuning Impact (Default vs. Tuned)](#-hyperparameter-tuning-impact-8117-test-accuracy)
+  - [Deep Learning 2D CNN Architecture](#-deep-learning-2d-mel-spectrogram-cnn)
+- [Web Application & UI Features](#web-application-architecture)
+- [Repository Structure](#repository-structure)
+- [🐳 Docker Deployment (Recommended)](#-docker-deployment-recommended)
+- [🚀 Installation & Setup (Local Environment)](#-installation--setup-local-environment)
+- [🧪 Testing & Verification](#-testing-the-model)
+- [Roadmap & Feature Checklist](#-roadmap--enhancements)
+- [License](#license)
 
 ---
 
-## Problem Statement
+## 🎧 Overview
 
-Music files contain rich information such as rhythm, timbre, energy, and frequency patterns. The goal of this project is to automatically classify a song into its **music genre** based on extracted audio features.
+Music genre classification involves analyzing acoustic patterns, harmonic structures, rhythms, and frequency distributions. This repository provides a complete, production-style machine learning pipeline that:
 
-The final system allows a user to upload a **`.wav` audio file** through a web interface, after which the application extracts the same features used during training and predicts the most likely genre.
-
----
-
-## Dataset
-
-The project uses a structured music-genre dataset stored as a CSV file.
-
-### Dataset summary
-
-- **Rows:** 1000
-- **Columns:** 30
-- **Target column:** `label`
-- **Human-readable genre column:** `class_name`
-
-### Core columns
-
-- `tempo`
-- `beats`
-- `chroma_stft`
-- `rmse`
-- `spectral_centroid`
-- `spectral_bandwidth`
-- `rolloff`
-- `zero_crossing_rate`
-- `mfcc1` to `mfcc20`
-
-Each row represents one audio sample with its extracted numerical features and corresponding genre label.
+1. **Extracts acoustic descriptors** (rhythm, timbre, spectral shape, energy) from raw audio files using `librosa`.
+2. **Trains and benchmarks** multiple scikit-learn models (Logistic Regression, KNN, Random Forest, Extra Trees, Gradient Boosting, SVM).
+3. **Applies univariate feature selection** (`SelectKBest` with ANOVA F-test) and **hyperparameter grid search** (`GridSearchCV`) to optimize accuracy.
+4. **Serializes the complete inference bundle** (trained model + scaler + feature selector + column alignment schema).
+5. **Serves real-time predictions** through a responsive Django web interface with in-memory audio processing.
 
 ---
 
-## Features Used
+## 🎼 Supported Genres
 
-The model is trained on **28 audio features**.
+The application features a **Dual-Model Classifier** with an intuitive toggle on the UI:
 
-### Rhythm Features
+### 🇮🇳 1. Indian Music Classifier (8 Genres)
 
-- `tempo`
-- `beats`
+| # | Genre | Description & Acoustic Signatures |
+|---|-------|-----------------------------------|
+| 1 | **Bollywood / Filmi** | Modern commercial film tracks, polished multi-layered production, catchy melodic hooks, contemporary pop/electronic rhythm |
+| 2 | **Carnatic Classical** | South Indian classical tradition, intricate Raga melodies, complex Tala rhythmic cycles, Veena, Mridangam, Violin |
+| 3 | **Hindustani Classical** | North Indian classical music, meditative Alap transitions into fast Jhala, Sitar, Sarod, Tabla, Bansuri harmonics |
+| 4 | **Punjabi / Bhangra** | High-energy driving rhythms, punchy acoustic dhol beats, festive tempo, celebratory hooks |
+| 5 | **Ghazal** | Poetic and lyrical acoustic arrangements, warm Harmonium resonance, nuanced Tabla phrasing, emotive vocal expression |
+| 6 | **Sufi / Qawwali** | Devotional spiritual ecstasy, clapped rhythm, chorus vocal responses, harmonium, accelerating tempo crescendos |
+| 7 | **Indian Folk** | Vibrant regional traditions (Garba, Lavani, Rajasthani, Bihu), authentic folk percussion (Dholak, Khartal), syncopated dance meter |
+| 8 | **Devotional / Bhajan** | Serene spiritual hymns, Harmonium, Manjira (cymbals), gentle acoustic rhythm, uplifting melodic warmth |
 
-### Spectral / Energy Features
+### 🌍 2. Global / Western Classifier (GTZAN 10 Genres)
 
-- `chroma_stft`
-- `rmse`
-- `spectral_centroid`
-- `spectral_bandwidth`
-- `rolloff`
-- `zero_crossing_rate`
-
-### Cepstral Features
-
-- `mfcc1` to `mfcc20`
-
-These features capture different aspects of an audio signal:
-
-- **Tempo / beats** → rhythm and pacing
-- **Spectral centroid / bandwidth / rolloff** → brightness and distribution of frequencies
-- **RMSE** → signal energy
-- **Zero crossing rate** → noisiness / percussive content
-- **MFCCs** → timbral characteristics, often highly useful for music/audio classification
-
----
-
-## ML Workflow
-
-### 1) Data Preparation
-
-- Load the dataset from CSV
-- Select the 28 numerical feature columns
-- Use the genre `label` as the target
-- Perform a **train-test split** with stratification
-
-### 2) Model Training
-
-The following models were trained and compared:
-
-- **Support Vector Machine**
-- **Extra Trees Classifier**
-- **Random Forest Classifier**
-- **K-Nearest Neighbors**
-
-### 3) Hyperparameter Tuning
-
-Hyperparameter tuning was applied to improve performance of the models.This included tuning parameters such as:
-
-- **SVM**: `C`, `gamma`, `kernel`
-- **Random Forest / Extra Trees**: `n_estimators`, `max_depth`, `min_samples_split`, etc.
-- **KNN**: `n_neighbors`, `weights`, distance metrics
-
-### 4) Feature Selection
-
-To improve generalization and reduce noise, **SelectKBest** with **ANOVA F-test (`f_classif`)** was applied.
-
-This was especially useful with SVM, resulting in the strongest final setup:
-
-> **Tuned SVM + SelectKBest**
+| # | Genre | Description |
+|---|-------|-------------|
+| 1 | **Blues** | Characteristic chord progressions, acoustic/electric guitar, emotive vocals |
+| 2 | **Classical** | Orchestral arrangements, acoustic instrumentation, wide dynamic range |
+| 3 | **Country** | Acoustic string instruments (banjo, fiddle, guitar), narrative vocals |
+| 4 | **Disco** | Four-on-the-floor rhythm, prominent basslines, syncopated rhythm guitars |
+| 5 | **Hiphop** | Heavy bass/sub-bass, rhythmic beats, sampled loops, percussive cadence |
+| 6 | **Jazz** | Swing rhythms, complex chords, brass/woodwind improvisation |
+| 7 | **Metal** | Distorted guitars, double-kick drumming, aggressive tempo, high energy |
+| 8 | **Pop** | Catchy melodic hooks, repetitive rhythm, polished production |
+| 9 | **Reggae** | Off-beat staccato chords (skank), prominent melodic basslines |
+| 10 | **Rock** | Driven electric guitars, driving drums, verse-chorus song structures |
 
 ---
 
-## Final Model
+## 🏗️ System Architecture
 
-The final deployed model is the **best-performing model selected after training and evaluation**.
-
-### Saved model package
-
-The project stores the trained model in a serialized file:
-
-```bash
-best_music_genre_model.pkl
+```
+                       Uploaded Audio (.wav, .mp3, .flac, .ogg, .m4a, .opus)
+                                              │
+                                              ▼
+                             [ Django View (`model_form_upload`) ]
+                                              │
+                     ┌────────────────────────┴────────────────────────┐
+                     ▼                                                 ▼
+        [ Mode: Classical ML (SVM) ]                     [ Mode: Deep Learning (CNN) ]
+                     │                                                 │
+      [ Feature Extraction (`Metadata.py`) ]             [ 2D Mel-Spectrogram Generation ]
+      Librosa: Tempo, Beats, Chroma, RMS,                128 Mel bands, n_fft=2048, dB-norm,
+      Spectral Centroid, Rolloff, ZCR, MFCCs (1-20)      Interpolated to (128x128) Tensor
+                     │                                                 │
+             28 Audio Descriptors                        PyTorch 4-Block Conv2D + BatchNorm
+                     │                                                 │
+          SelectKBest (ANOVA F-test)                     Global Average Pooling + Linear
+                     │                                                 │
+             StandardScaler                                     Softmax Logits
+                     │                                                 │
+            Support Vector Classifier (RBF C=15)                       │
+                     │                                                 │
+                     └────────────────────────┬────────────────────────┘
+                                              ▼
+                             [ Prediction Result View (`result.html`) ]
+                             • Top Predicted Genre & Confidence %
+                             • Interactive In-Browser HTML5 Audio Player
+                             • Ranked Top-3 Genre Probability Breakdown
+                             • Dual Spectrogram & Waveform Visualizations
+                             • Export Analysis as JSON / Print PDF Report
 ```
 
-The saved package can include:
+---
 
-- `model_name`
-- `model`
-- `scaler`
-- `feature_columns`
-- `selector` *(when the best model uses SelectKBest)*
+## 📊 Dataset & Audio Features
 
-This makes inference reproducible because the same preprocessing steps used during training are also applied during prediction.
+The project is trained on the standard 1,000-track music genre dataset (`data.csv`):
+- **Samples:** 1,000 (100 audio tracks per genre, perfectly balanced across 10 classes)
+- **Features:** 28 numerical acoustic features extracted per sample
+- **Target Column:** `label` / `class_name`
+
+### The 28 Extracted Features
+
+| Category | Features | Description |
+|---|---|---|
+| **Rhythm & Tempo** | `tempo`, `beats` | Overall tempo in BPM (beats per minute) and total detected beat frame count. |
+| **Energy** | `rmse` | Root Mean Square Energy, representing the signal's loudness and physical amplitude. |
+| **Pitch & Harmony** | `chroma_stft` | 12-bin Chroma Short-Time Fourier Transform measuring harmonic and tonal pitch distribution. |
+| **Spectral Shape** | `spectral_centroid` | Center of mass of the frequency spectrum; indicates perceived "brightness" of sound. |
+| **Spectral Spread** | `spectral_bandwidth` | Frequency width of the spectral band around the centroid. |
+| **Spectral Rolloff** | `rolloff` | Frequency below which 85% of total spectral energy lies. |
+| **Percussiveness / Noise** | `zero_crossing_rate` | Rate at which the acoustic signal changes sign; distinguishes noisy/percussive sounds. |
+| **Timbre (Cepstral)** | `mfcc1` – `mfcc20` | First 20 Mel-Frequency Cepstral Coefficients capturing timbral identity and vocal/instrument color. |
+
+### Feature Selection (SelectKBest)
+
+Using ANOVA F-value (`f_classif`), the top **20 most discriminative features** are selected:
+- **Retained (20 features):**
+  `chroma_stft`, `rmse`, `spectral_centroid`, `spectral_bandwidth`, `rolloff`, `zero_crossing_rate`, `mfcc1`, `mfcc2`, `mfcc3`, `mfcc4`, `mfcc5`, `mfcc6`, `mfcc7`, `mfcc8`, `mfcc9`, `mfcc10`, `mfcc12`, `mfcc13`, `mfcc15`, `mfcc17`
+- **Pruned (8 features):**
+  `tempo`, `beats`, `mfcc11`, `mfcc14`, `mfcc16`, `mfcc18`, `mfcc19`, `mfcc20`
+
+> **Why remove tempo & beats?** Tempo varies significantly within genres (e.g., slow vs. fast rock or hip-hop ballads) and raw beat frame counts introduce noise compared to spectral and timbral texture representations.
 
 ---
 
-## Project Architecture
+## 🔬 Machine Learning Workflow & Benchmarks
 
-### Training side
+The project benchmarks multiple machine learning algorithms across both the 1,000-track GTZAN Western dataset and our curated 768-sample 8-genre Indian music dataset (`datasets/indian_music_data.csv`).
 
-1. Load dataset
-2. Train multiple ML models
-3. Tune hyperparameters
-4. Evaluate models
-5. Select the best model
-6. Save the model package as `.pkl`
+### 🏆 12-Model Machine Learning Tournament Leaderboard
 
-### Web app side
+Evaluated on the 768-sample Indian music dataset using **5-Fold Stratified Cross-Validation**:
 
-1. User uploads a `.wav` file in Django
-2. `Metadata.py` extracts audio features using **librosa**
-3. `predict.py` loads the saved model package
-4. Input features are reordered to match the training feature order
-5. Required preprocessing is applied:
-   - scaling
-   - feature selection (if needed)
-6. The model predicts the genre
-7. Result is displayed in the UI
-
----
-
-## Django Inference Pipeline
-
-### `Metadata.py`
-
-Responsible for extracting the same features from an uploaded `.wav` file that were used during training.
-
-Extracted features:
-
-- tempo
-- beats
-- chroma_stft
-- rmse
-- spectral_centroid
-- spectral_bandwidth
-- rolloff
-- zero_crossing_rate
-- mfcc1 → mfcc20
-
-It returns a **dictionary** of feature values so the prediction code can arrange them in the exact training order.
-
-### `predict.py`
-
-Responsible for:
-
-- loading the saved model package
-- converting extracted metadata into a DataFrame
-- applying the correct preprocessing depending on the model type
-- returning the predicted genre
-
-### `views.py`
-
-Handles:
-
-- file upload from the user
-- validation of `.wav` input
-- feature extraction
-- model prediction
-- rendering the final predicted genre on the result page
+| Rank | Model Architecture | 5-Fold CV Mean | CV StdDev | Test Accuracy | Weighted F1 |
+| :---: | :--- | :---: | :---: | :---: | :---: |
+| 🥇 | **Tuned SVM (RBF, $C=15.0$)** | **72.48%** | **±3.65%** | **81.17%** | **0.81** |
+| 🥈 | **Tuned SVM (RBF, $C=3.0 / 5.0$)** | 71.99% | ±2.54% | 79.87% | 0.79 |
+| 🥉 | **Soft Voting Ensemble (SVM + MLP + ET)** | 70.70% | ±4.21% | 78.57% | 0.79 |
+| 4 | **MLP Neural Network (128x64)** | 69.55% | ±4.73% | 75.97% | 0.76 |
+| 5 | **Extra Trees Classifier (350 trees)** | 70.37% | ±2.67% | 74.68% | 0.75 |
+| 6 | **Tuned KNN ($k=3$, Distance-weighted)** | 67.11% | ±2.69% | 74.68% | 0.74 |
+| 7 | **Random Forest (300 trees, depth=18)** | 69.72% | ±3.93% | 72.73% | 0.72 |
+| 8 | **HistGradientBoosting** | 65.64% | ±3.39% | 70.13% | 0.70 |
+| 9 | **Gradient Boosting (Trees)** | 62.88% | ±4.82% | 70.13% | 0.70 |
+| 10 | **Logistic Regression** | 62.71% | ±3.94% | 61.69% | 0.62 |
+| 11 | **Linear SVM ($C=1.0$)** | 63.04% | ±4.59% | 60.39% | 0.61 |
+| 12 | **Naive Bayes (Gaussian)** | 54.23% | ±2.38% | 54.55% | 0.53 |
 
 ---
 
-## Project Structure
+### 📈 Hyperparameter Tuning Impact (81.17% Test Accuracy)
 
-```bash
+Using systematic grid search (`GridSearchCV`) across regularizations, kernel bandwidths, and tree structures:
+
+| Model | Default Parameters | Default Test Acc | Best Tuned Hyperparameters | Tuned Test Acc | Net Gain |
+| :--- | :--- | :---: | :--- | :---: | :---: |
+| **SVM (RBF Kernel)** | `C=1.0, gamma='scale'` | 72.73% | `C=15.0, gamma='scale'` | **81.17%** | **+8.44%** 🚀 |
+| **KNN** | `k=5, weights='uniform'` | 63.64% | `k=3, weights='distance', p=2` | **74.68%** | **+11.04%** 🚀 |
+| **Random Forest** | `n=100, max_depth=None` | 71.43% | `n=300, max_depth=18, min_split=4` | **72.73%** | **+1.30%** |
+| **Extra Trees** | `n=100, max_depth=None` | 74.68% | `n=350, max_depth=15, min_split=2` | **74.68%** | *(Higher CV stability)* |
+
+---
+
+### 🧠 Deep Learning: 2D Mel-Spectrogram CNN
+
+In addition to hand-crafted tabular audio descriptors, the application includes an end-to-end deep learning pipeline implemented in PyTorch (`scripts/train_cnn_model.py`):
+* **Input Representation:** 2D Mel-Spectrogram matrix ($128 \times 128$ frequency-time bins, normalized in dB scale).
+* **Architecture:** 4 convolutional blocks (Conv2d $\rightarrow$ BatchNorm2d $\rightarrow$ ReLU $\rightarrow$ MaxPool2d) followed by AdaptiveAvgPool2d and Linear output classification layer.
+* **Hardware Acceleration:** Native PyTorch execution supporting Apple Silicon Metal Performance Shaders (`mps`), CUDA GPU, or CPU.
+* **Model Artifact:** Serialized to `predictor/models/indian_music_cnn_model.pt`.
+
+---
+
+## 🌐 Web Application Architecture
+
+The Django web app is organized into two primary applications:
+
+1. **`MusicClassification/`**: Core project configuration
+   - `settings.py`: Defines application settings, installed apps, static/media paths, and `MODELS = os.path.join(BASE_DIR, 'predictor/models')`.
+   - `urls.py`: Main URL routing pointing to `predictor.urls`.
+   - `wsgi.py`: WSGI entry point for production deployments.
+
+2. **`predictor/`**: Audio classification application
+   - `Metadata.py`: Audio processing module using `librosa`. Accepts file paths or in-memory uploaded file objects (calling `.seek(0)`).
+   - `predict.py`: Model loader and prediction handler. Loads the pickled pipeline, transforms features, and invokes `model.predict()`.
+   - `views.py`:
+     - `IndexView`: Renders the upload form and interface.
+     - `model_form_upload`: Validates `.wav` upload, triggers in-memory feature extraction, queries the model, and displays `music/result.html`.
+   - `templates/music/`: HTML templates styled with Bootstrap and custom CSS.
+
+---
+
+## 📁 Repository Structure
+
+```
 Music_Genre_Classification/
+├── data.csv                          # 1,000-sample GTZAN dataset with 28 features
+├── db.sqlite3                        # SQLite development database
+├── manage.py                         # Django management script
+├── model_training.ipynb              # Complete training, tuning & evaluation notebook
+├── requirements.txt                  # Python dependency specifications
+├── README.md                         # Project documentation
 │
-├── manage.py
-├── data.csv
-├── model_training.ipynb
-├── requirements.txt
-├── best_music_genre_model.pkl
+├── datasets/                         # Clean dataset storage
+│   ├── data.csv                      # GTZAN dataset copy
+│   ├── indian_music_data.csv         # 500-sample real Indian music features
+│   └── kaggle_indian/                # 500 authentic Indian audio tracks (.mp3)
 │
-├── predictor/
-│   ├── views.py
-│   ├── predict.py
-│   ├── Metadata.py
-│   ├── forms.py
-│   ├── models.py
-│   ├── urls.py
-│   ├── templates/
-│   │   └── music/
-│   │       ├── index.html
-│   │       └── result.html
-│   └── ...
+├── sample_audio/                     # Sample audio files for testing (3.wav, new.wav)
 │
-└── models/
-    └── best_music_genre_model.pkl
+├── scripts/                          # Standalone data processing & ML scripts
+│   ├── extract_indian_features.py    # Parallel feature extractor across audio folders
+│   ├── train_indian_model.py         # Tuned SVM training & benchmark pipeline (81.17% Acc)
+│   ├── train_cnn_model.py            # PyTorch 2D Mel-Spectrogram CNN training pipeline
+│   └── benchmark_models.py           # 12-Model tournament benchmark script
+│
+├── MusicClassification/              # Django Project Configuration
+│   ├── __init__.py
+│   ├── settings.py                   # Django settings (configured with MODELS path)
+│   ├── urls.py                       # Root URL dispatcher
+│   └── wsgi.py                       # WSGI entry point
+│
+└── predictor/                        # Django Predictor App
+    ├── admin.py                      # Django admin registration
+    ├── apps.py                       # App configuration
+    ├── forms.py                      # Document upload form
+    ├── models.py                     # Document model definition
+    ├── urls.py                       # Predictor URL routing ('/' and 'result/')
+    ├── views.py                      # Upload processing & inference view
+    ├── Metadata.py                   # In-app feature extraction module
+    ├── predict.py                    # Dual-model inference pipeline handler
+    ├── tests.py                      # Automated test suite (9 tests)
+    │
+    ├── models/                       # Trained Model Artifacts
+    │   ├── indian_music_genre_model.pkl # Indian Music Model (Tuned SVM RBF C=15, 8 classes)
+    │   ├── indian_music_cnn_model.pt    # Indian Deep Learning CNN (PyTorch, 8 classes)
+    │   └── best_music_genre_model.pkl   # Global GTZAN Model (SVM + SelectKBest, 10 classes)
+    │
+    ├── migrations/                   # Database migration files
+    │   ├── 0001_initial.py
+    │   └── 0002_alter_document_id.py
+    │
+    ├── static/music/                 # Frontend assets
+    │   ├── css/                      # Bootstrap & custom styling
+    │   ├── images/                   # Icons, illustrations, background images
+    │   ├── js/                       # Interactive JavaScript plugins
+    │   └── webfonts/                 # FontAwesome web fonts
+    │
+    └── templates/music/              # Django UI Templates
+        ├── base.html                 # Base layout template
+        ├── index.html                # Main landing page
+        ├── check_genre.html          # Drag-and-drop file upload component
+        ├── messages.html             # Flash messages & alerts
+        ├── result.html               # Prediction result view
+        └── snippets/                 # Reusable template snippets
 ```
-
-> The exact folder layout can vary slightly depending on where the trained model file is stored inside the Django project.
 
 ---
 
-## How to Run the Project
+## 🐳 Docker Deployment (Recommended)
 
-### 1) Clone the repository
+Run the entire application in a standardized production container with pre-configured audio drivers (`libsndfile`, `ffmpeg`, `gunicorn`, `PyTorch`):
 
 ```bash
-git clone <your-repository-url>
+# Build and start container in detached mode
+docker compose up --build -d
+
+# Check live logs
+docker compose logs -f
+
+# Visit the web application
+open http://localhost:8000
+```
+
+To stop the container:
+```bash
+docker compose down
+```
+
+---
+
+## 🚀 Installation & Setup (Local Environment)
+
+### Prerequisites
+
+- **Python:** 3.10 or 3.11 recommended (Python 3.12+ may encounter legacy library build conflicts).
+- **Audio backend:** `libsndfile` (pre-installed on macOS/Linux; used by `soundfile` and `librosa`).
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/your-username/Music_Genre_Classification.git
 cd Music_Genre_Classification
 ```
 
-### 2) Create a virtual environment
+### 2. Create and Activate Virtual Environment
 
-#### macOS / Linux
-
+**macOS / Linux:**
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-#### Windows
-
-```bash
+**Windows:**
+```cmd
 python -m venv .venv
 .venv\Scripts\activate
 ```
 
-### 3) Install dependencies
+### 3. Install Dependencies
 
 ```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4) Make sure the trained model file exists
-
-Place the trained model file in the folder pointed to by your Django `settings.MODELS` path:
+### 4. Run Database Migrations
 
 ```bash
-best_music_genre_model.pkl
-```
-
-### 5) Run migrations
-
-```bash
-python manage.py makemigrations
 python manage.py migrate
 ```
 
-### 6) Start the Django server
+*(Note: The database migrations are already initialized in `predictor/migrations/`. You only need to run `migrate` to set up your local SQLite database).*
+
+### 5. Start Development Server
 
 ```bash
 python manage.py runserver
 ```
 
-### 7) Open the app in browser
+Visit **`http://127.0.0.1:8000/`** in your web browser.
 
-Visit:
+---
 
-```bash
-http://127.0.0.1:8000/
+## 🧪 Testing the Model
+
+### Through the Web UI
+
+1. Open `http://127.0.0.1:8000/`.
+2. Scroll to the **CHECK GENRE** section.
+3. Upload the provided test audio file `3.wav` or `new.wav` (or any valid 16-bit or 24-bit `.wav` file).
+4. Click **Check**.
+5. The result page will display the predicted genre (e.g., `classical`).
+
+### Programmatically via Python / Notebook
+
+You can test feature extraction and predictions directly from a Python terminal or inside `model_training.ipynb`:
+
+```python
+import pickle
+import pandas as pd
+from Metadata import getmetadata
+
+# 1. Load the trained model bundle
+with open("predictor/models/best_music_genre_model.pkl", "rb") as f:
+    pkg = pickle.load(f)
+
+model = pkg["model"]
+selector = pkg["selector"]
+scaler = pkg["scaler"]
+feature_cols = pkg["feature_columns"]
+
+# 2. Extract features from a .wav file
+features_dict = getmetadata("3.wav")
+
+# 3. Format into a DataFrame matching training schema
+df_sample = pd.DataFrame([[features_dict[col] for col in feature_cols]], columns=feature_cols)
+
+# 4. Transform and predict
+X_selected = selector.transform(df_sample)
+X_scaled = scaler.transform(X_selected)
+prediction = model.predict(X_scaled)[0]
+
+print(f"Predicted Genre: {prediction}")
+# Output: Predicted Genre: classical
 ```
 
-Upload a `.wav` file and the app will display the predicted genre.
+---
+
+## 🔍 Known Clarifications & Differences from Legacy Code
+
+1. **Model Storage Location**:
+   - The serialized model file is located at `predictor/models/best_music_genre_model.pkl` (configured via `settings.MODELS`).
+   - `predictor/models/models.p` is a legacy artifact from an earlier baseline version; the active production pipeline uses `best_music_genre_model.pkl`.
+2. **In-Memory Audio Processing**:
+   - The application does not store user-uploaded audio files permanently on disk. When a `.wav` file is submitted, `views.py` resets the buffer pointer using `uploadfile.seek(0)` and streams it directly into `librosa.load()`, saving storage overhead.
+3. **Template Display vs. Notebook Metrics**:
+   - The landing page's counter contains demo stats (750 training / 250 test, 73.2% accuracy).
+   - The actual rigorous evaluation performed in `model_training.ipynb` uses an **80/20 stratified split** (800 train / 200 test) yielding **70.5% test accuracy** for the tuned SVM with SelectKBest.
+4. **Multi-Format Audio Processing**:
+   - The pipeline natively supports `.wav`, `.mp3`, `.ogg`, `.flac`, `.m4a`, `.aac`, `.au`, and `.aiff` audio formats with robust in-memory decoding and fallback temporary file handling.
 
 ---
 
-## Example Prediction Flow
+## 🔮 Roadmap & Feature Checklist
 
-1. Upload a `.wav` file
-2. The app extracts:
-   - tempo
-   - beats
-   - spectral features
-   - MFCC features
-3. Features are arranged in the same order as training
-4. Saved model pipeline is loaded
-5. Model predicts the genre label
-6. Result is shown on the web page
+- [x] **Multi-Format Audio Support**: Natively process `.wav`, `.mp3`, `.ogg`, `.flac`, `.m4a`, `.opus`, `.au`, and `.aiff` with PyAV and Librosa fallbacks.
+- [x] **Expanded Indian Genres**: Curated 8 distinct real-world Indian music genres (*Bollywood, Carnatic, Hindustani, Punjabi, Ghazal, Sufi, Folk, Bhajan*).
+- [x] **Interactive In-Browser Audio Player**: Embedded HTML5 waveform audio playback on the prediction result page.
+- [x] **Analysis Export & Reporting**: Client-side JSON inspection export and formatted print/PDF generation.
+- [x] **Deep Learning Models (Option A)**: PyTorch 2D Mel-Spectrogram CNN model with dual-architecture toggle (⚡ Classical ML vs 🧠 Deep Learning).
+- [x] **12-Model ML Tournament & Hyperparameter Tuning**: Systematic 5-fold cross-validation reaching **81.17% Test Accuracy** with tuned SVM ($C=15.0$).
+- [x] **Production Dockerization (Option B)**: Multi-stage `Dockerfile` with system audio dependencies (`libsndfile`, `ffmpeg`), Gunicorn WSGI, and `docker-compose.yml`.
+- [x] **Automated Test Suite**: 9 unit tests passing across audio formats, model types, and deep learning inference.
 
 ---
 
-## Why This Project Is Strong for a Portfolio
+## 📄 License
 
-This project demonstrates practical skills across **multiple parts of the ML lifecycle**:
-
-### Machine Learning
-
-- supervised classification
-- model comparison
-- hyperparameter tuning
-- feature selection
-- model evaluation
-- cross-validation
-
-### Audio / Signal Processing
-
-- feature extraction from raw audio
-- use of MFCCs and spectral features
-- bridging raw media input to structured ML features
-
-### Deployment / Application Integration
-
-- serializing trained ML models
-- building a web interface with Django
-- integrating model inference into a real application workflow
-- handling file uploads and inference-time preprocessing
-
----
-
-## Challenges Solved During Development
-
-Some of the practical issues addressed in this project include:
-
-- aligning **training features** with **prediction-time extracted features**
-- ensuring uploaded `.wav` files produce the **same feature schema** as the training dataset
-- handling model-specific preprocessing at inference time
-- saving not just the model, but also the **scaler / selector / feature order**
-- debugging feature mismatches between notebook experiments and Django deployment
-
----
-
-## Possible Future Improvements
-
-There are several ways this project can be extended:
-
-- Add **top-3 genre probabilities** instead of only one predicted label
-- Show extracted feature values and confidence scores in the UI
-- Support additional audio formats such as `.mp3`
-- Move from hand-crafted features to **deep learning on spectrograms**
-- Train CNN / CRNN models on **mel spectrograms**
-- Add charts for waveform / spectrogram visualization in the web app
-- Containerize the app for deployment
-
----
-
-## Learning Outcomes
-
-Through this project, the following concepts were applied in practice:
-
-- audio feature extraction using **librosa**
-- classical ML model training and evaluation
-- feature engineering and selection
-- hyperparameter tuning
-- model persistence with pickle
-- integrating ML inference with a Django application
-
----
-
-## Conclusion
-
-This project is an end-to-end implementation of **Music Genre Classification using Machine Learning and Django**.
-
-It goes beyond a simple notebook experiment by covering:
-
-- structured feature engineering from audio
-- multiple model experiments and tuning
-- best-model packaging for inference
-- real-world deployment through a web interface
-
-It is a strong example of combining **ML + audio processing + web development** into a single usable application.
+This project is open-source and available under the [MIT License](LICENSE).

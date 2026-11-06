@@ -1,42 +1,316 @@
-{% extends 'music/base.html' %}
 {% load static %}
-{% block content %}
 
 <div id="basic-2" class="tabs">
     <div class="container">
-      <a id="errormess"></a>
+        <a id="errormess"></a>
 
         <div class="row">
-            <div class="col-lg-12" style="margin-bottom: 6rem;">
-              <a id="errormess">
-              {% include 'music/messages.html' %}
+            <div class="col-lg-12" style="margin-bottom: 2.5rem; text-align: center;">
+                {% include 'music/messages.html' %}
 
-                <h2>CHECK GENRE</h2>
-                <div class="p-heading p-large">Here you can drag and drop your music file or click on the area and upload your music file to check genre of the music.</div>
-            </div> <!-- end of col -->
+                <h2>CHECK MUSIC GENRE</h2>
+                <div class="p-heading p-large" style="max-width: 800px; margin: 0 auto;">
+                    Upload or drag & drop your track to instantly classify its genre, analyze confidence distributions, and inspect audio spectrograms.
+                </div>
+            </div>
         </div>
-        <div class="row">
-            <form action="{% url 'predictor:result' %}" method="POST" enctype="multipart/form-data" class="up-form">
-               {% csrf_token %}
-               <input type="file" name='document' multiple="" class="up-input">
-               {{form.as_table}}
-              <p class="up-p">Drag your music file here or click in this area.</p>
-              <button type="submit" class="btn btn-sm btn-success" style="margin-left: 9rem; width: 30vh;">Check</button>
 
-            </form>
-        </div> <!-- end of row -->
-    </div> <!-- end of container -->
-</div> <!-- end of basic-2 -->
-<!-- end of File Upload -->
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <form action="{% url 'predictor:result' %}" method="POST" enctype="multipart/form-data" class="model-select-form">
+                    {% csrf_token %}
 
-{% endblock %}
+                    <!-- Dual Model Selector Toggle -->
+                    <div class="model-selector-card mb-4">
+                        <div class="selector-title">
+                            <i class="fas fa-sliders-h"></i> Choose Classification Model:
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-md-6 mb-2">
+                                <label class="model-option active" id="label-indian">
+                                    <input type="radio" name="model_type" value="indian" checked style="display: none;">
+                                    <div class="option-header">
+                                        <span class="flag-icon">🇮🇳</span>
+                                        <strong>Indian Music Classifier</strong>
+                                        <span class="badge badge-success ml-1 status-badge" id="badge-indian">Active</span>
+                                    </div>
+                                    <div class="option-desc">
+                                        Bollywood, Carnatic, Semiclassical, Ghazal, Sufi, Bhajan, Folk, Desi Hip-Hop
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <label class="model-option" id="label-global">
+                                    <input type="radio" name="model_type" value="global" style="display: none;">
+                                    <div class="option-header">
+                                        <span class="flag-icon">🌍</span>
+                                        <strong>Global / Western Classifier</strong>
+                                        <span class="badge badge-success ml-1 status-badge" id="badge-global" style="display: none;">Active</span>
+                                        <span class="badge badge-secondary ml-1">GTZAN</span>
+                                    </div>
+                                    <div class="option-desc">
+                                        Blues, Classical, Country, Disco, Hiphop, Jazz, Metal, Pop, Reggae, Rock
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
 
-{% block js%}
+                        <!-- ML vs Deep Learning Architecture Toggle -->
+                        <div class="mt-3 pt-2" style="border-top: 1px solid #2d3553;">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap">
+                                <span style="color: #94a3b8; font-size: 0.88rem; font-weight: 600;">
+                                    <i class="fas fa-microchip text-primary mr-1"></i> Classifier Engine:
+                                </span>
+                                <div class="btn-group btn-group-toggle mt-1">
+                                    <label class="btn btn-sm btn-outline-primary active" id="btn-arch-svm" style="font-weight: 600; border-radius: 20px 0 0 20px; padding: 0.35rem 0.9rem; cursor: pointer;">
+                                        <input type="radio" name="architecture" value="svm" checked style="display: none;"> ⚡ Classical ML (SVM)
+                                    </label>
+                                    <label class="btn btn-sm btn-outline-primary" id="btn-arch-cnn" style="font-weight: 600; border-radius: 0 20px 20px 0; padding: 0.35rem 0.9rem; cursor: pointer;">
+                                        <input type="radio" name="architecture" value="cnn" style="display: none;"> 🧠 Deep Learning (2D CNN)
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Drag & Drop Upload Zone -->
+                    <div class="drop-zone-container">
+                        <input type="file" name="document" accept="audio/*,.wav,.mp3,.ogg,.flac,.m4a,.aac,.au,.aiff" class="up-input-custom" required>
+                        <div class="drop-zone-content">
+                            <div class="upload-icon-circle">
+                                <i class="fas fa-cloud-upload-alt fa-2x"></i>
+                            </div>
+                            <h5 class="upload-title mt-3">Drag & drop your audio track here, or <span style="color: #818cf8; text-decoration: underline;">browse</span></h5>
+                            <p class="upload-subtitle">Supported formats: <strong>.WAV, .MP3, .FLAC, .OGG, .M4A, .AU, .AIFF</strong></p>
+                            <div class="selected-file-display mt-2" style="display: none;">
+                                <i class="fas fa-check-circle text-success"></i> <span class="file-name-text"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg px-5 py-3" style="font-weight: 700; border-radius: 30px; letter-spacing: 0.5px; box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);">
+                            <i class="fas fa-wave-square mr-2"></i> Classify Music Track
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .model-select-form {
+        max-width: 820px;
+        margin: 0 auto;
+    }
+
+    .model-selector-card {
+        background: #1e2238;
+        border: 1px solid #333c5e;
+        border-radius: 12px;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .selector-title {
+        color: #e2e8f0;
+        font-weight: 700;
+        font-size: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .model-option {
+        display: block;
+        background: #151828;
+        border: 2px solid #2d3553;
+        border-radius: 10px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        height: 100%;
+    }
+
+    .model-option:hover {
+        border-color: #6366f1;
+        background: #1a1e33;
+    }
+
+    .model-option.active,
+    .model-option:has(input:checked) {
+        border-color: #6366f1 !important;
+        background: rgba(99, 102, 241, 0.18) !important;
+        box-shadow: 0 0 18px rgba(99, 102, 241, 0.35) !important;
+    }
+
+    .option-header {
+        color: #f8fafc;
+        font-size: 1.05rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .flag-icon {
+        font-size: 1.25rem;
+    }
+
+    .option-desc {
+        color: #94a3b8;
+        font-size: 0.82rem;
+        margin-top: 0.4rem;
+        line-height: 1.4;
+    }
+
+    .drop-zone-container {
+        position: relative;
+        background: #181c2e;
+        border: 2px dashed #4f46e5;
+        border-radius: 14px;
+        padding: 3rem 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .drop-zone-container:hover {
+        background: #1e2238;
+        border-color: #818cf8;
+    }
+
+    .up-input-custom {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+        z-index: 5;
+    }
+
+    .upload-icon-circle {
+        width: 65px;
+        height: 65px;
+        margin: 0 auto;
+        background: rgba(99, 102, 241, 0.15);
+        color: #818cf8;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .upload-title {
+        color: #f1f5f9;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+
+    .upload-subtitle {
+        color: #94a3b8;
+        font-size: 0.88rem;
+        margin-bottom: 0;
+    }
+
+    .selected-file-display {
+        display: inline-block;
+        background: #23293f;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        color: #f8fafc;
+        font-size: 0.9rem;
+    }
+</style>
+
 <script>
-    $(document).ready(function(){
-        $('.up-input').change(function () {
-            $('.up-p').text(this.files.length + " file(s) selected");
-        });
-    });
+    (function initModelSelector() {
+        function setModel(type) {
+            var indianOpt = document.getElementById('label-indian');
+            var globalOpt = document.getElementById('label-global');
+            var indianRadio = document.querySelector('input[name="model_type"][value="indian"]');
+            var globalRadio = document.querySelector('input[name="model_type"][value="global"]');
+            var badgeIndian = document.getElementById('badge-indian');
+            var badgeGlobal = document.getElementById('badge-global');
+
+            if (type === 'global') {
+                if (globalRadio) globalRadio.checked = true;
+                if (indianOpt) indianOpt.classList.remove('active');
+                if (globalOpt) globalOpt.classList.add('active');
+                if (badgeIndian) badgeIndian.style.display = 'none';
+                if (badgeGlobal) badgeGlobal.style.display = 'inline-block';
+            } else {
+                if (indianRadio) indianRadio.checked = true;
+                if (globalOpt) globalOpt.classList.remove('active');
+                if (indianOpt) indianOpt.classList.add('active');
+                if (badgeGlobal) badgeGlobal.style.display = 'none';
+                if (badgeIndian) badgeIndian.style.display = 'inline-block';
+            }
+        }
+
+        function setupListeners() {
+            var indianOpt = document.getElementById('label-indian');
+            var globalOpt = document.getElementById('label-global');
+
+            if (indianOpt) {
+                indianOpt.addEventListener('click', function(e) {
+                    setModel('indian');
+                });
+            }
+
+            if (globalOpt) {
+                globalOpt.addEventListener('click', function(e) {
+                    setModel('global');
+                });
+            }
+
+            var radios = document.querySelectorAll('input[name="model_type"]');
+            radios.forEach(function(radio) {
+                radio.addEventListener('change', function() {
+                    setModel(this.value);
+                });
+            });
+
+            // Architecture buttons toggle
+            var btnSvm = document.getElementById('btn-arch-svm');
+            var btnCnn = document.getElementById('btn-arch-cnn');
+            var radioSvm = document.querySelector('input[name="architecture"][value="svm"]');
+            var radioCnn = document.querySelector('input[name="architecture"][value="cnn"]');
+
+            if (btnSvm && btnCnn) {
+                btnSvm.addEventListener('click', function() {
+                    btnSvm.classList.add('active');
+                    btnCnn.classList.remove('active');
+                    if (radioSvm) radioSvm.checked = true;
+                });
+                btnCnn.addEventListener('click', function() {
+                    btnCnn.classList.add('active');
+                    btnSvm.classList.remove('active');
+                    if (radioCnn) radioCnn.checked = true;
+                });
+            }
+
+            var fileInput = document.querySelector('.up-input-custom');
+            if (fileInput) {
+                fileInput.addEventListener('change', function() {
+                    if (this.files && this.files.length > 0) {
+                        var file = this.files[0];
+                        var fileSize = (file.size / (1024 * 1024)).toFixed(2);
+                        var nameSpan = document.querySelector('.file-name-text');
+                        var displayBox = document.querySelector('.selected-file-display');
+                        if (nameSpan) nameSpan.textContent = file.name + " (" + fileSize + " MB)";
+                        if (displayBox) displayBox.style.display = 'inline-block';
+                    }
+                });
+            }
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupListeners);
+        } else {
+            setupListeners();
+        }
+    })();
 </script>
-{%endblock%}

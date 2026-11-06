@@ -1,8 +1,11 @@
 from django import forms
-from .models import Document
+
 
 class DocumentForm(forms.Form):
     def is_valid(*args, **kwargs):
         return True
 
-    file = forms.FileField(help_text='Valid .mp3 file')
+    file = forms.FileField(
+        required=False,
+        help_text='Supported formats: .wav, .mp3, .ogg, .flac, .m4a, .aac, .au, .aiff'
+    )

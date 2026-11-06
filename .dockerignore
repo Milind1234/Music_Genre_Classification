@@ -1,0 +1,37 @@
+# Git
+.git
+.gitignore
+
+# Python virtual environment and caches
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Raw multi-gigabyte audio datasets (models are already trained and saved in predictor/models/)
+datasets/gacmis/
+datasets/kaggle_indian/
+sample_audio/
+
+# Database & SQLite files
+*.sqlite3
+db.sqlite3
+
+# Uploaded media (keep folder, don't ship uploaded tracks)
+media/*
+!media/.gitkeep
+
+# System & IDE files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.log
+
+# Testing & Coverage
+.coverage
+htmlcov/
+
