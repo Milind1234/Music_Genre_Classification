@@ -31,3 +31,7 @@ db.sqlite3
 # Test & coverage
 .coverage
 htmlcov/
+
+# Root temporary artifacts (production models are tracked in predictor/models/)
+/*.pkl
+
